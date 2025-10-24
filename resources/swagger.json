@@ -1,0 +1,290 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "API Gestão Financeira de Condomínio",
+    "version": "1.0.0",
+    "description": "API para controle financeiro de condomínio, com autenticação JWT, upload/download de comprovantes e cálculo automático de saldo."
+  },
+  "servers": [
+    { "url": "http://localhost:3000" }
+  ],
+  "components": {
+    "securitySchemes": {
+      "bearerAuth": {
+        "type": "http",
+        "scheme": "bearer",
+        "bearerFormat": "JWT"
+      }
+    },
+    "schemas": {
+      "User": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "nome": { "type": "string" },
+          "email": { "type": "string" }
+        }
+      },
+      "UserRegister": {
+        "type": "object",
+        "properties": {
+          "nome": { "type": "string" },
+          "email": { "type": "string" },
+          "senha": { "type": "string" },
+          "isAdmin": { "type": "boolean" }
+        },
+        "required": ["nome", "email", "senha"]
+      },
+      "UserLogin": {
+        "type": "object",
+        "properties": {
+          "email": { "type": "string" },
+          "senha": { "type": "string" }
+        },
+        "required": ["email", "senha"]
+      },
+      "Despesa": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "despesa": { "type": "string" },
+          "valor": { "type": "number" },
+          "data": { "type": "string", "format": "date" },
+          "comprovante": { "type": "string", "nullable": true }
+        }
+      },
+      "Receita": {
+        "type": "object",
+        "properties": {
+          "id": { "type": "integer" },
+          "tipo": { "type": "string" },
+          "valor": { "type": "number" },
+          "data": { "type": "string", "format": "date" },
+          "comprovante": { "type": "string", "nullable": true }
+        }
+      },
+      "Resumo": {
+        "type": "object",
+        "properties": {
+          "saldoAnterior": { "type": "number" },
+          "totalReceita": { "type": "number" },
+          "totalDespesas": { "type": "number" },
+          "saldoAtual": { "type": "number" },
+          "totalCaixa": { "type": "number" }
+        }
+      },
+      "Error": {
+        "type": "object",
+        "properties": {
+          "message": { "type": "string" }
+        }
+      }
+    }
+  },
+  "security": [
+    { "bearerAuth": [] }
+  ],
+  "paths": {
+    "/api/users/register": {
+      "post": {
+        "summary": "Registrar novo usuário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserRegister" }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Usuário criado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "400": { "description": "E-mail já cadastrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/users/login": {
+      "post": {
+        "summary": "Login de usuário",
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "$ref": "#/components/schemas/UserLogin" }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Login bem-sucedido", "content": { "application/json": { "schema": { "type": "object", "properties": { "token": { "type": "string" } } } } } },
+          "401": { "description": "Usuário ou senha inválidos", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/users": {
+      "get": {
+        "summary": "Listar usuários",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Lista de usuários", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/User" } } } } },
+          "401": { "description": "Token não fornecido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Token inválido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/users/{id}": {
+      "get": {
+        "summary": "Buscar usuário por ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Usuário encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/User" } } } },
+          "404": { "description": "Usuário não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/despesas": {
+      "post": {
+        "summary": "Registrar despesa",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "multipart/form-data": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "despesa": { "type": "string" },
+                  "valor": { "type": "number" },
+                  "data": { "type": "string", "format": "date" },
+                  "comprovante": { "type": "string", "format": "binary" }
+                },
+                "required": ["despesa", "valor", "data"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Despesa registrada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Despesa" } } } },
+          "401": { "description": "Token não fornecido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Token inválido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "get": {
+        "summary": "Listar despesas",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Lista de despesas", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Despesa" } } } } },
+          "401": { "description": "Token não fornecido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Token inválido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/despesas/{id}": {
+      "get": {
+        "summary": "Buscar despesa por ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Despesa encontrada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Despesa" } } } },
+          "404": { "description": "Despesa não encontrada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/receitas": {
+      "post": {
+        "summary": "Registrar receita",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "tipo": { "type": "string" },
+                  "valor": { "type": "number" },
+                  "data": { "type": "string", "format": "date" },
+                  "comprovante": { "type": "string" }
+                },
+                "required": ["tipo", "valor", "data"]
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": { "description": "Receita registrada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Receita" } } } },
+          "401": { "description": "Token não fornecido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Token inválido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      },
+      "get": {
+        "summary": "Listar receitas",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Lista de receitas", "content": { "application/json": { "schema": { "type": "array", "items": { "$ref": "#/components/schemas/Receita" } } } } },
+          "401": { "description": "Token não fornecido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Token inválido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/receitas/{id}": {
+      "get": {
+        "summary": "Buscar receita por ID",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "id", "in": "path", "required": true, "schema": { "type": "integer" } }
+        ],
+        "responses": {
+          "200": { "description": "Receita encontrada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Receita" } } } },
+          "404": { "description": "Receita não encontrada", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/resumo": {
+      "get": {
+        "summary": "Obter resumo financeiro",
+        "security": [{ "bearerAuth": [] }],
+        "responses": {
+          "200": { "description": "Resumo financeiro", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Resumo" } } } },
+          "401": { "description": "Token não fornecido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Token inválido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/resumo/saldo-anterior": {
+      "post": {
+        "summary": "Definir saldo anterior do mês",
+        "security": [{ "bearerAuth": [] }],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": { "type": "object", "properties": { "saldoAnterior": { "type": "number" } }, "required": ["saldoAnterior"] }
+            }
+          }
+        },
+        "responses": {
+          "200": { "description": "Saldo anterior definido", "content": { "application/json": { "schema": { "type": "object", "properties": { "saldoAnterior": { "type": "number" } } } } } },
+          "401": { "description": "Token não fornecido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } },
+          "403": { "description": "Token inválido", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    },
+    "/api/files/{filename}": {
+      "get": {
+        "summary": "Download de comprovante",
+        "security": [{ "bearerAuth": [] }],
+        "parameters": [
+          { "name": "filename", "in": "path", "required": true, "schema": { "type": "string" } }
+        ],
+        "responses": {
+          "200": { "description": "Arquivo baixado" },
+          "404": { "description": "Arquivo não encontrado", "content": { "application/json": { "schema": { "$ref": "#/components/schemas/Error" } } } }
+        }
+      }
+    }
+  }
+}
