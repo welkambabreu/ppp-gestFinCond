@@ -33,4 +33,10 @@ app.use('/api/files', authMiddleware, fileRoutes);
 app.get('/', (req, res) => res.send('API Gestão Financeira Condomínio'));
 
 const PORT = process.env.PORT || 3000;
-app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+
+// Apenas inicia o servidor quando o arquivo for executado diretamente
+if (require.main === module) {
+  app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
+}
+
+module.exports = app;
