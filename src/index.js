@@ -39,4 +39,10 @@ if (require.main === module) {
   app.listen(PORT, () => console.log(`Servidor rodando na porta ${PORT}`));
 }
 
+// Handler global de erro
+app.use((err, req, res, next) => {
+  console.error('Erro não tratado:', err);
+  res.status(500).json({ message: 'Erro interno do servidor', error: err.message });
+});
+
 module.exports = app;

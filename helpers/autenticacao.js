@@ -1,17 +1,15 @@
 const request = require('supertest');
-const obterToken = async(email, senha) => {
-    const respostaLogin = await request(process.env.BASE_URL)
+const app = require('../src/index');
+
+const obterToken = async (email, senha) => {
+    const respostaLogin = await request(app)
         .post('/api/users/login')
         .set('Content-Type', 'application/json')
-        .send(
-            {
-                'email': email,
-                'senha': senha
-            })
+        .send({ email, senha });
 
-    return respostaLogin.body.token
-}
+    return respostaLogin.body ? respostaLogin.body.token : null;
+};
 
 module.exports = {
-    obterToken
-}
+    obterToken,
+};

@@ -1,8 +1,12 @@
 const incomes = require('../models/incomeModel');
 
 exports.create = (req, res) => {
-  const { tipo, valor, data, comprovante } = req.body;
-  const income = { id: incomes.length + 1, tipo, valor, data, comprovante };
+  const { receita, valor, data } = req.body;
+  let comprovante = null;
+  if (req.file) {
+    comprovante = req.file.filename;
+  }
+  const income = { id: incomes.length + 1, receita, valor, data, comprovante };
   incomes.push(income);
   res.status(201).json(income);
 };
