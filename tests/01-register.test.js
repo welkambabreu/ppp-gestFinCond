@@ -7,7 +7,7 @@ describe('Registro', () => {
     describe('POST/register', () => {
 
         it('Ao cadastrar usuário comum com sucesso deve retornar 201 a mensagem usuário criado', async () => {
-            const respostaComum = await request(process.env.BASE_URL)
+            const respostaComum = await request(app)
                 .post('/api/users/register')
                 .set('Content-Type', 'application/json')
 
@@ -27,7 +27,7 @@ describe('Registro', () => {
         })
 
         it('Ao cadastrar administrador com sucesso deve retornar 201 a mensagem usuário criado', async () => {
-            const respostaAdm = await request(process.env.BASE_URL)
+            const respostaAdm = await request(app)
                 .post('/api/users/register')
                 .set('Content-Type', 'application/json')
 
@@ -47,7 +47,7 @@ describe('Registro', () => {
         })
 
         it('Ao tentar cadastrar e-mail existente deve retornar 40', async () => {
-            const respostaJacad = await request(process.env.BASE_URL)
+            const respostaJacad = await request(app)
                 .post('/api/users/register')
                 .set('Content-Type', 'application/json')
 

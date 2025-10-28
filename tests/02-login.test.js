@@ -1,5 +1,6 @@
 const request = require('supertest');
 const { expect } = require('chai');
+const app = require('../src/index');
 require('dotenv').config();
 
 describe('Login', () => {
@@ -7,7 +8,7 @@ describe('Login', () => {
     describe('POST/login', () => {
 
         it('Ao logar com o usuário adminsitrador com sucesso deve retornar 200 com o token', async () => {
-            const respostaAdm = await request(process.env.BASE_URL)
+            const respostaAdm = await request(app)
                 .post('/api/users/login')
                 .set('Content-Type', 'application/json')
                 .send(
@@ -21,7 +22,7 @@ describe('Login', () => {
         })
 
         it('Ao logar com o usuário comum com sucesso deve retornar 200 com o token', async () => {
-            const resposta = await request(process.env.BASE_URL)
+            const resposta = await request(app)
                 .post('/api/users/login')
                 .set('Content-Type', 'application/json')
                 .send(
@@ -35,7 +36,7 @@ describe('Login', () => {
         })
 
         it('Ao logar com o usuário inválido deve retornar status 401', async () => {
-            const respostaInv = await request(process.env.BASE_URL)
+            const respostaInv = await request(app)
                 .post('/api/users/login')
                 .set('Content-Type', 'application/json')
                 .send(

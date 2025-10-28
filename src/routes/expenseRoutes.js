@@ -14,7 +14,8 @@ const storage = multer.diskStorage({
 });
 const upload = multer({ storage });
 
-router.post('/', upload.single('comprovante'), controller.create);
+const authMiddleware = require('../middleware/auth');
+router.post('/', upload.single('comprovante'), authMiddleware, controller.create);
 router.get('/', controller.getAll);
 router.get('/:id', controller.getById);
 
